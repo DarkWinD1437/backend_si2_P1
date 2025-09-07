@@ -1,0 +1,21 @@
+# Production requirements
+-r base.txt
+
+# Servidor y archivos estáticos
+gunicorn==21.2.0
+whitenoise==6.6.0
+
+# Monitoreo y logging
+sentry-sdk==1.38.0
+
+# Task Queue (requerido para producción)
+celery==5.3.6
+redis==5.0.3
+django-celery-beat==2.5.0
+django-celery-results==2.5.1
+
+# IA y Procesamiento de Imágenes (si se usa en producción)
+opencv-python==4.9.0.80
+numpy==1.26.4
+tensorflow==2.16.1
+keras==3.3.3

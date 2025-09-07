@@ -1,0 +1,21 @@
+# Development requirements
+-r base.txt
+
+# Debugging
+django-debug-toolbar==4.2.0
+ipython==8.18.0
+
+# Testing
+pytest==7.4.3
+pytest-django==4.7.0
+factory-boy==3.3.0
+
+# IA y Procesamiento de Imágenes (solo para desarrollo/pruebas)
+opencv-python==4.9.0.80
+numpy==1.26.4
+
+# Task Queue (opcional para desarrollo)
+celery==5.3.6
+redis==5.0.3
+django-celery-beat==2.5.0
+django-celery-results==2.5.1
