@@ -1,0 +1,35 @@
+{
+  "timestamp": "2025-09-13T03:39:05.364064",
+  "summary": {
+    "total": 4,
+    "passed": 0,
+    "failed": 4,
+    "success_rate": 0.0
+  },
+  "tests": [
+    {
+      "test": "Autenticación Administrador",
+      "success": false,
+      "details": "HTTP 401: {\"detail\":\"Authentication credentials were not provided.\"}",
+      "timestamp": "2025-09-13T03:39:05.339909"
+    },
+    {
+      "test": "Autenticación Residente",
+      "success": false,
+      "details": "HTTP 401: {\"detail\":\"Authentication credentials were not provided.\"}",
+      "timestamp": "2025-09-13T03:39:05.345967"
+    },
+    {
+      "test": "Estado cuenta residente",
+      "success": false,
+      "details": "Sin token de residente",
+      "timestamp": "2025-09-13T03:39:05.347902"
+    },
+    {
+      "test": "Estado cuenta admin",
+      "success": false,
+      "details": "Sin token de administrador",
+      "timestamp": "2025-09-13T03:39:05.349346"
+    }
+  ]
+}

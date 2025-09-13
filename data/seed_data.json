@@ -1,0 +1,58 @@
+{
+    "users": [
+        {
+            "username": "admin",
+            "email": "admin@smartcondominium.com",
+            "password": "admin123",
+            "first_name": "Administrador",
+            "last_name": "Principal",
+            "role": "admin",
+            "phone": "+1234567890",
+            "address": "Oficina de Administración",
+            "is_staff": true,
+            "is_superuser": true,
+            "is_active": true
+        },
+        {
+            "username": "carlos.rodriguez",
+            "email": "carlos.rodriguez@email.com",
+            "password": "password123",
+            "first_name": "Carlos",
+            "last_name": "Rodríguez",
+            "role": "resident",
+            "phone": "+1234567891",
+            "address": "Departamento A101"
+        },
+        {
+            "username": "maria.gonzalez",
+            "email": "maria.gonzalez@email.com",
+            "password": "password123",
+            "first_name": "María",
+            "last_name": "González",
+            "role": "resident",
+            "phone": "+1234567892",
+            "address": "Departamento A102"
+        },
+        {
+            "username": "juan.perez",
+            "email": "juan.perez@email.com",
+            "password": "password123",
+            "first_name": "Juan",
+            "last_name": "Pérez",
+            "role": "resident",
+            "phone": "+1234567893",
+            "address": "Departamento A201"
+        },
+        {
+            "username": "security1",
+            "email": "security@smartcondominium.com",
+            "password": "security123",
+            "first_name": "Jorge",
+            "last_name": "Flores",
+            "role": "security",
+            "phone": "+1234567801",
+            "address": "Garita de Seguridad",
+            "is_staff": true
+        }
+    ]
+}

@@ -83,11 +83,15 @@ INSTALLED_APPS = [
     #lo que se aumento
     'rest_framework',
     'rest_framework.authtoken',
+    'rest_framework_simplejwt',
     'corsheaders',
     # Local apps - FORMA CORRECTA
     'api',
+    'condominio',  # ← Nueva app para el condominio
     'backend.apps.finances',  # ← Si necesitas otras apps
+    'backend.apps.communications',  # ← Nueva app de comunicaciones
     'backend.apps.security',
+    'backend.apps.audit',  # ← Módulo de auditoría y bitácora
 ]
 
 MIDDLEWARE = [
@@ -132,6 +136,10 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD', default='123456'), # <-- contraseña
         'HOST': config('DB_HOST', default='localhost'),      # <-- host
         'PORT': config('DB_PORT', default='5432'),           # <-- puerto
+        'OPTIONS': {
+            'client_encoding': 'UTF8',
+        },
+        'CONN_MAX_AGE': 60,  # Conexiones persistentes
     }
 }
 
@@ -172,6 +180,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Media files (User uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

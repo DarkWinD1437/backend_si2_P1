@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "created": "2025-09-11",
+    "description": "Datos completos para poblar Smart Condominium"
+  },
+  "sql_statements": {
+    "roles": [
+      "INSERT INTO rol (nombre, descripcion) VALUES ('Administrador', 'Administrador del sistema con todos los permisos'), ('Propietario', 'Propietario de una unidad habitacional'), ('Inquilino', 'Persona que habita una unidad habitacional'), ('Seguridad', 'Personal de seguridad del condominio'), ('Conserje', 'Personal de conserjería y atención a residentes'), ('Mantenimiento', 'Personal de mantenimiento del condominio');"
+    ],
+    "usuarios": [
+      "INSERT INTO usuario (nombre, email, password, telefono, tipo, activo) VALUES ('Administrador Principal', 'admin@smartcondominium.com', crypt('admin123', gen_salt('bf')), '+1234567890', 'administrador', TRUE);",
+      "INSERT INTO usuario (nombre, email, password, telefono, tipo, activo) VALUES ('Carlos Rodríguez', 'carlos.rodriguez@email.com', crypt('password123', gen_salt('bf')), '+1234567891', 'propietario', TRUE), ('María González', 'maria.gonzalez@email.com', crypt('password123', gen_salt('bf')), '+1234567892', 'propietario', TRUE), ('Juan Pérez', 'juan.perez@email.com', crypt('password123', gen_salt('bf')), '+1234567893', 'propietario', TRUE), ('Ana Martínez', 'ana.martinez@email.com', crypt('password123', gen_salt('bf')), '+1234567894', 'propietario', TRUE), ('Luis Sánchez', 'luis.sanchez@email.com', crypt('password123', gen_salt('bf')), '+1234567895', 'propietario', TRUE), ('Laura López', 'laura.lopez@email.com', crypt('password123', gen_salt('bf')), '+1234567896', 'inquilino', TRUE), ('Pedro García', 'pedro.garcia@email.com', crypt('password123', gen_salt('bf')), '+1234567897', 'inquilino', TRUE), ('Sofía Hernández', 'sofia.hernandez@email.com', crypt('password123', gen_salt('bf')), '+1234567898', 'inquilino', TRUE), ('Diego Torres', 'diego.torres@email.com', crypt('password123', gen_salt('bf')), '+1234567899', 'inquilino', TRUE), ('Elena Ramírez', 'elena.ramirez@email.com', crypt('password123', gen_salt('bf')), '+1234567800', 'inquilino', TRUE), ('Jorge Flores', 'jorge.flores@email.com', crypt('password123', gen_salt('bf')), '+1234567801', 'seguridad', TRUE), ('Mónica Díaz', 'monica.diaz@email.com', crypt('password123', gen_salt('bf')), '+1234567802', 'seguridad', TRUE), ('Ricardo Vargas', 'ricardo.vargas@email.com', crypt('password123', gen_salt('bf')), '+1234567803', 'conserje', TRUE), ('Isabel Castro', 'isabel.castro@email.com', crypt('password123', gen_salt('bf')), '+1234567804', 'conserje', TRUE), ('Fernando Ruiz', 'fernando.ruiz@email.com', crypt('password123', gen_salt('bf')), '+1234567805', 'mantenimiento', TRUE), ('Gabriela Morales', 'gabriela.morales@email.com', crypt('password123', gen_salt('bf')), '+1234567806', 'mantenimiento', TRUE), ('Roberto Silva', 'roberto.silva@email.com', crypt('password123', gen_salt('bf')), '+1234567807', 'administrador', TRUE), ('Carmen Ortega', 'carmen.ortega@email.com', crypt('password123', gen_salt('bf')), '+1234567808', 'propietario', TRUE), ('Miguel Mendoza', 'miguel.mendoza@email.com', crypt('password123', gen_salt('bf')), '+1234567809', 'propietario', TRUE);"
+    ]
+  },
+  "summary": {
+    "total_users": 20,
+    "total_areas": 10,
+    "total_vehicles": 20,
+    "total_units": 20,
+    "total_reservations": 20,
+    "total_payments": 14,
+    "total_notices": 20,
+    "total_maintenances": 20,
+    "total_security_events": 20,
+    "total_reports": 20
+  }
+}
