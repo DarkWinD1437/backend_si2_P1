@@ -795,6 +795,257 @@ class CargoFinancieroViewSet(viewsets.ModelViewSet):
         }
         
         return Response(estado_cuenta)
+
+    @action(detail=False, methods=['get'], url_path='estado_cuenta/(?P<user_id>[^/.]+)')
+    def estado_cuenta_usuario(self, request, user_id=None):
+        """
+        Consultar estado de cuenta de un usuario específico por ID
+        T2: Consultar estado de cuenta - Módulo 2 Gestión Financiera Básica
+        
+        Solo para personal de seguridad y administradores.
+        """
+        # Verificar permisos: Solo seguridad y admin pueden acceder
+        user_role = getattr(request.user, 'role', None)
+        if not ((user_role in ['admin', 'security']) or request.user.is_superuser):
+            return Response(
+                {'error': 'No tiene permisos para consultar el estado de cuenta de otros residentes'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Obtener el residente
+        residente = get_object_or_404(User, id=user_id)
+        
+        # Obtener fechas para filtros
+        hoy = date.today()
+        mes_actual = hoy.replace(day=1)
+        hace_6_meses = hoy - timedelta(days=180)
+        
+        # CARGOS PENDIENTES
+        cargos_pendientes = CargoFinanciero.objects.filter(
+            residente=residente,
+            estado=EstadoCargo.PENDIENTE
+        ).select_related('concepto').order_by('fecha_vencimiento')
+        
+        # CARGOS VENCIDOS
+        cargos_vencidos = cargos_pendientes.filter(fecha_vencimiento__lt=hoy)
+        
+        # HISTORIAL DE PAGOS (últimos 6 meses)
+        historial_pagos = CargoFinanciero.objects.filter(
+            residente=residente,
+            estado=EstadoCargo.PAGADO,
+            fecha_pago__gte=hace_6_meses
+        ).select_related('concepto').order_by('-fecha_pago')
+        
+        # CARGOS PAGADOS ESTE MES
+        pagos_mes_actual = CargoFinanciero.objects.filter(
+            residente=residente,
+            estado=EstadoCargo.PAGADO,
+            fecha_pago__gte=mes_actual
+        ).select_related('concepto')
+        
+        # TOTALES Y ESTADÍSTICAS
+        total_pendiente = cargos_pendientes.aggregate(Sum('monto'))['monto__sum'] or Decimal('0.00')
+        total_vencido = cargos_vencidos.aggregate(Sum('monto'))['monto__sum'] or Decimal('0.00')
+        total_pagado_mes = pagos_mes_actual.aggregate(Sum('monto'))['monto__sum'] or Decimal('0.00')
+        total_pagado_6_meses = historial_pagos.aggregate(Sum('monto'))['monto__sum'] or Decimal('0.00')
+        
+        # PRÓXIMO VENCIMIENTO
+        proximo_vencimiento = cargos_pendientes.filter(fecha_vencimiento__gte=hoy).first()
+        
+        # ÚLTIMO PAGO
+        ultimo_pago = CargoFinanciero.objects.filter(
+            residente=residente,
+            estado=EstadoCargo.PAGADO
+        ).select_related('concepto').order_by('-fecha_pago').first()
+        
+        # DESGLOSE POR TIPO DE CONCEPTO
+        desglose_pendiente = cargos_pendientes.values(
+            'concepto__tipo',
+            'concepto__nombre'
+        ).annotate(
+            cantidad=Count('id'),
+            total=Sum('monto')
+        ).order_by('concepto__tipo')
+        
+        # ESTRUCTURA DEL ESTADO DE CUENTA
+        estado_cuenta = {
+            'residente_info': {
+                'id': residente.id,
+                'username': residente.username,
+                'email': residente.email,
+                'nombre_completo': f"{residente.first_name} {residente.last_name}".strip() or residente.username,
+                'first_name': residente.first_name,
+                'last_name': residente.last_name
+            },
+            'fecha_consulta': hoy,
+            'resumen_general': {
+                'total_pendiente': total_pendiente,
+                'total_vencido': total_vencido,
+                'total_al_dia': total_pendiente - total_vencido,
+                'cantidad_cargos_pendientes': cargos_pendientes.count(),
+                'cantidad_cargos_vencidos': cargos_vencidos.count(),
+                'total_pagado_mes_actual': total_pagado_mes,
+                'total_pagado_6_meses': total_pagado_6_meses
+            },
+            'cargos_pendientes': CargoFinancieroListSerializer(cargos_pendientes, many=True).data,
+            'cargos_vencidos': CargoFinancieroListSerializer(cargos_vencidos, many=True).data,
+            'historial_pagos': CargoFinancieroListSerializer(historial_pagos[:20], many=True).data,  # Últimos 20
+            'desglose_por_tipo': list(desglose_pendiente),
+            'proximo_vencimiento': {
+                'cargo': CargoFinancieroListSerializer(proximo_vencimiento).data if proximo_vencimiento else None,
+                'fecha': proximo_vencimiento.fecha_vencimiento if proximo_vencimiento else None,
+                'dias_restantes': (proximo_vencimiento.fecha_vencimiento - hoy).days if proximo_vencimiento else None
+            },
+            'ultimo_pago': {
+                'cargo': CargoFinancieroListSerializer(ultimo_pago).data if ultimo_pago else None,
+                'fecha': ultimo_pago.fecha_pago if ultimo_pago else None,
+                'hace_dias': (hoy - ultimo_pago.fecha_pago.date()).days if ultimo_pago and ultimo_pago.fecha_pago else None
+            },
+            'alertas': self._generar_alertas_estado_cuenta(cargos_vencidos, proximo_vencimiento)
+        }
+        
+        return Response(estado_cuenta)
+
+    @action(detail=False, methods=['get'])
+    def estados_cuenta_usuarios(self, request):
+        """
+        Consultar estados de cuenta de todos los usuarios (para personal de seguridad)
+        T2: Consultar estado de cuenta - Módulo 2 Gestión Financiera Básica
+        
+        Solo para personal de seguridad y administradores.
+        Incluye información resumida de todos los residentes con sus estados de cuenta.
+        """
+        # Verificar permisos: Solo seguridad y admin pueden acceder
+        user_role = getattr(request.user, 'role', None)
+        if not ((user_role in ['admin', 'security']) or request.user.is_superuser):
+            return Response(
+                {'error': 'No tiene permisos para consultar esta información'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Obtener filtros de búsqueda
+        search = request.query_params.get('search', '').strip()
+        estado = request.query_params.get('estado', None)  # 'pendiente', 'vencido', 'al_dia'
+        
+        # Obtener todos los residentes
+        residentes = User.objects.filter(
+            Q(role='resident') | Q(is_superuser=False)
+        ).exclude(id=request.user.id)  # Excluir al propio usuario si es residente
+        
+        # Aplicar filtro de búsqueda
+        if search:
+            residentes = residentes.filter(
+                Q(username__icontains=search) |
+                Q(first_name__icontains=search) |
+                Q(last_name__icontains=search) |
+                Q(email__icontains=search)
+            )
+        
+        # Obtener datos financieros para cada residente
+        hoy = date.today()
+        estados_cuenta = []
+        
+        for residente in residentes:
+            # CARGOS PENDIENTES
+            cargos_pendientes = CargoFinanciero.objects.filter(
+                residente=residente,
+                estado=EstadoCargo.PENDIENTE
+            )
+            
+            # CARGOS VENCIDOS
+            cargos_vencidos = cargos_pendientes.filter(fecha_vencimiento__lt=hoy)
+            
+            # TOTALES
+            total_pendiente = cargos_pendientes.aggregate(Sum('monto'))['monto__sum'] or Decimal('0.00')
+            total_vencido = cargos_vencidos.aggregate(Sum('monto'))['monto__sum'] or Decimal('0.00')
+            
+            # DETERMINAR ESTADO GENERAL
+            if total_vencido > 0:
+                estado_general = 'vencido'
+            elif total_pendiente > 0:
+                estado_general = 'pendiente'
+            else:
+                estado_general = 'al_dia'
+            
+            # Aplicar filtro de estado si se especifica
+            if estado and estado_general != estado:
+                continue
+            
+            # PRÓXIMO VENCIMIENTO
+            proximo_vencimiento = cargos_pendientes.filter(fecha_vencimiento__gte=hoy).first()
+            
+            # ÚLTIMO PAGO
+            ultimo_pago = CargoFinanciero.objects.filter(
+                residente=residente,
+                estado=EstadoCargo.PAGADO
+            ).order_by('-fecha_pago').first()
+            
+            estados_cuenta.append({
+                'residente_info': {
+                    'id': residente.id,
+                    'username': residente.username,
+                    'email': residente.email,
+                    'nombre_completo': f"{residente.first_name} {residente.last_name}".strip() or residente.username,
+                    'first_name': residente.first_name,
+                    'last_name': residente.last_name
+                },
+                'estado_financiero': {
+                    'estado_general': estado_general,
+                    'total_pendiente': total_pendiente,
+                    'total_vencido': total_vencido,
+                    'cantidad_cargos_pendientes': cargos_pendientes.count(),
+                    'cantidad_cargos_vencidos': cargos_vencidos.count(),
+                    'proximo_vencimiento': {
+                        'fecha': proximo_vencimiento.fecha_vencimiento if proximo_vencimiento else None,
+                        'dias_restantes': (proximo_vencimiento.fecha_vencimiento - hoy).days if proximo_vencimiento else None,
+                        'concepto': proximo_vencimiento.concepto.nombre if proximo_vencimiento else None
+                    },
+                    'ultimo_pago': {
+                        'fecha': ultimo_pago.fecha_pago if ultimo_pago else None,
+                        'monto': ultimo_pago.monto if ultimo_pago else None,
+                        'concepto': ultimo_pago.concepto.nombre if ultimo_pago else None
+                    }
+                }
+            })
+        
+        # Ordenar por estado de urgencia: vencidos primero, luego pendientes, luego al día
+        def ordenar_por_urgencia(item):
+            estado = item['estado_financiero']['estado_general']
+            if estado == 'vencido':
+                return 0
+            elif estado == 'pendiente':
+                return 1
+            else:
+                return 2
+        
+        estados_cuenta.sort(key=ordenar_por_urgencia)
+        
+        # Estadísticas generales
+        total_residentes = len(estados_cuenta)
+        total_residentes_vencidos = sum(1 for item in estados_cuenta if item['estado_financiero']['estado_general'] == 'vencido')
+        total_residentes_pendientes = sum(1 for item in estados_cuenta if item['estado_financiero']['estado_general'] == 'pendiente')
+        total_residentes_al_dia = sum(1 for item in estados_cuenta if item['estado_financiero']['estado_general'] == 'al_dia')
+        
+        total_monto_pendiente = sum(float(item['estado_financiero']['total_pendiente']) for item in estados_cuenta)
+        total_monto_vencido = sum(float(item['estado_financiero']['total_vencido']) for item in estados_cuenta)
+        
+        resultado = {
+            'estadisticas_generales': {
+                'total_residentes': total_residentes,
+                'residentes_vencidos': total_residentes_vencidos,
+                'residentes_pendientes': total_residentes_pendientes,
+                'residentes_al_dia': total_residentes_al_dia,
+                'total_monto_pendiente': total_monto_pendiente,
+                'total_monto_vencido': total_monto_vencido
+            },
+            'estados_cuenta': estados_cuenta,
+            'filtros_aplicados': {
+                'search': search,
+                'estado': estado
+            }
+        }
+        
+        return Response(resultado)
     
     def _generar_alertas_estado_cuenta(self, cargos_vencidos, proximo_vencimiento):
         """Generar alertas relevantes para el estado de cuenta"""

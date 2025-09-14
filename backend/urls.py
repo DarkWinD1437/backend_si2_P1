@@ -18,7 +18,7 @@ urlpatterns = [
     path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     path('api/auth-token/', obtain_auth_token, name='api_token_auth'),
     # API URLs
-    path('api/', include('api.urls')),
+    path('api/', include('backend.apps.api.urls')),
     # Users URLs
     path('api/', include('backend.apps.users.urls')),
     # Finances URLs

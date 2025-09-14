@@ -1,0 +1,45 @@
+services:
+  # Servicio de PostgreSQL
+  db:
+    image: postgres:17-alpine
+    container_name: smart_condominium_db_prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-Smart_Condominium}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # Servicio del Backend Django usando tu imagen de Docker Hub
+  backend:
+    image: darkw1nd/smart-condominium-backend:latest
+    container_name: smart_condominium_backend_prod
+    restart: unless-stopped
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-Smart_Condominium}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG:-False}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+    volumes:
+      - ./media:/app/media
+      - ./staticfiles:/app/staticfiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge

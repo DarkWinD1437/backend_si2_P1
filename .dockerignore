@@ -1,0 +1,61 @@
+# Git
+.git
+.gitignore
+README.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+media/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Environments
+.env
+.env.local
+.env.production
+
+# Node modules (si tienes frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+htmlcov/
+.coverage
+.pytest_cache/
+
+# Development files
+debug_*.py
+test_*.py
+scripts/testing_manual/
+docs/
+tests/

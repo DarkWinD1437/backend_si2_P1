@@ -44,6 +44,8 @@ CARGOS FINANCIEROS:
 - GET    /api/finances/cargos/vencidos/               - Cargos vencidos (admin)
 - GET    /api/finances/cargos/resumen/{user_id}/      - Resumen financiero residente
 - GET    /api/finances/cargos/estado_cuenta/          - Estado de cuenta completo (T2)
+- GET    /api/finances/cargos/estado_cuenta/{user_id}/ - Estado de cuenta de usuario específico (T2 - seguridad)
+- GET    /api/finances/cargos/estados_cuenta_usuarios/ - Estados de cuenta de todos los usuarios (T2 - seguridad)
 
 ESTADÍSTICAS:
 - GET    /api/finances/estadisticas/                  - Estadísticas generales (admin)
@@ -57,4 +59,7 @@ Cargos:
 
 Estado de Cuenta:
   ?residente=user_id  (solo para administradores)
+
+Estados de Cuenta Usuarios (seguridad):
+  ?search=nombre&estado=vencido  (filtros de búsqueda)
 """

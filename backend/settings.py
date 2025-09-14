@@ -27,7 +27,12 @@ SECRET_KEY = 'django-insecure-d5(8tyr650_a%nxtk-$+n-_2_kl#4xof&*_g*d)&pmrauv9s6*
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '192.168.0.7',  # ← IP local para Flutter
+    '0.0.0.0',      # ← Para desarrollo
+]
 
 # Configuración de CORS para desarrollo
 CORS_ALLOW_ALL_ORIGINS = True  # Solo para desarrollo
@@ -38,7 +43,10 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite por defecto
     "http://localhost:5174",  # Vite alternativo
     "http://localhost:8080",  # Flutter web
-    "http://192.168.0.7:8000" # Flutter web local
+    "http://192.168.0.7:8000", # Flutter web local
+    "http://10.0.2.2:8000",   # Android emulator
+    "http://192.168.1.1:8000", # Red local común
+    "http://127.0.0.1:8000",  # localhost con puerto
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -57,6 +65,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',  # ← Agregar JWT
     ],
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
@@ -85,9 +94,9 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
     'corsheaders',
-    # Local apps - FORMA CORRECTA
-    'api',
-    'condominio',  # ← Nueva app para el condominio
+    # Local apps - FORMA CORRECTA Y CONSISTENTE
+    'backend.apps.api',  # ← Movida a backend/apps/api
+    'backend.apps.condominio',  # ← Actualizada a ruta completa
     'backend.apps.finances',  # ← Si necesitas otras apps
     'backend.apps.communications',  # ← Nueva app de comunicaciones
     'backend.apps.security',
@@ -197,3 +206,4 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR / 'backend' / 'apps'))
+sys.path.insert(0, str(BASE_DIR))  # ← Añadir directorio raíz para api y condominio
