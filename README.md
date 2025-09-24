@@ -1,36 +1,107 @@
 # 🏢 Smart Condominium Backend - Django
 
-## 📁 Estructura del Proyecto Organizada
+Sistema completo de gestión para condominios desarrollado con Django REST Framework.
 
+## � Requisitos Previos
+
+- Python 3.8+
+- PostgreSQL 12+
+- Git
+
+## 🛠️ Instalación y Configuración
+
+### 1. Clonar el repositorio
+```bash
+git clone https://github.com/DarkWinD1437/backend_si2_P1.git
+cd backend_si2_P1
 ```
-Backend_Django/
-├── 🔧 api/                    # API endpoints básicos
-├── 🏗️ backend/                # Configuración principal Django
-│   ├── apps/users/           # App de usuarios (Módulo 1)
-│   ├── settings.py           # Configuración Django
-│   └── urls.py               # URLs principales
-├── 🏠 condominio/             # App principal del condominio
-├── 📊 data/                   # Archivos de datos ⭐ ORGANIZADO
-│   ├── seed_data.json        # Datos semilla para BD
-│   ├── login_data.json       # Datos de login para tests
-│   └── README.md             # Documentación de datos
-├── 📚 docs/                   # Documentación completa ⭐ ORGANIZADO
-│   ├── informes_tareas/      # Informes principales
-│   ├── modulo1_usuarios/     # Docs específicas Módulo 1
-│   ├── README.md             # Índice de documentación
-│   └── [otros archivos].md   # Documentación general
-├── 🔧 scripts/               # Scripts auxiliares ⭐ ORGANIZADO
-│   ├── poblado_db/          # Scripts poblado de base de datos
-│   ├── testing_manual/      # Scripts testing manual
-│   ├── utilidades/         # Scripts de utilidades
-│   └── README.md           # Documentación de scripts
-├── 🧪 tests/                 # Tests unitarios ⭐ LIMPIO
-│   └── modulo1_usuarios/    # Tests Módulo 1 únicamente
-├── 🔐 .env                   # Variables de entorno
-├── 🐍 manage.py              # Script principal Django
-├── 📋 requirements.txt       # Dependencias Python
-└── 🌐 venv/                  # Entorno virtual Python
+
+### 2. Crear entorno virtual
+```bash
+python -m venv venv
+# En Windows:
+venv\Scripts\activate
+# En Linux/Mac:
+source venv/bin/activate
 ```
+
+### 3. Instalar dependencias
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Configurar variables de entorno
+
+**⚠️ IMPORTANTE:** Nunca subas archivos `.env` al repositorio.
+
+Copia el archivo de ejemplo y configura tus credenciales:
+```bash
+cp .env.example .env
+```
+
+Edita el archivo `.env` con tus configuraciones:
+```bash
+# Configuración de Base de Datos
+DB_NAME=tu_base_de_datos
+DB_USER=tu_usuario_postgres
+DB_PASSWORD=tu_contraseña_segura
+DB_HOST=localhost
+DB_PORT=5432
+
+# Configuración de Django
+SECRET_KEY=tu-clave-secreta-muy-larga-y-segura-aqui
+DEBUG=True
+```
+
+### 5. Configurar PostgreSQL
+
+Crea la base de datos en PostgreSQL:
+```sql
+CREATE DATABASE tu_base_de_datos;
+CREATE USER tu_usuario_postgres WITH PASSWORD 'tu_contraseña_segura';
+GRANT ALL PRIVILEGES ON DATABASE tu_base_de_datos TO tu_usuario_postgres;
+```
+
+### 6. Ejecutar migraciones
+```bash
+python manage.py migrate
+```
+
+### 7. Poblar base de datos (opcional)
+```bash
+# Poblar con datos de prueba
+python scripts/poblado_db/poblar_completo_simple.py
+```
+
+### 8. Crear superusuario (opcional)
+```bash
+python manage.py createsuperuser
+```
+
+### 9. Ejecutar el servidor
+```bash
+python manage.py runserver
+```
+
+El servidor estará disponible en: http://localhost:8000
+
+## 🔒 Seguridad y Mejores Prácticas
+
+### ✅ Archivo .gitignore Configurado
+- ✅ Archivos `.env` ignorados automáticamente
+- ✅ Credenciales sensibles protegidas
+- ✅ Archivos temporales y cache ignorados
+
+### ✅ Variables de Entorno Seguras
+- ✅ Credenciales de BD en variables de entorno
+- ✅ SECRET_KEY configurable
+- ✅ DEBUG=False por defecto en producción
+
+### ✅ Nunca Subas al Repositorio
+- ❌ `.env` (contiene credenciales reales)
+- ❌ `venv/` (entorno virtual)
+- ❌ `*.log` (logs con información sensible)
+- ❌ `*.sqlite3` (bases de datos locales)
 
 ## 🎯 Estado del Proyecto
 
@@ -40,8 +111,31 @@ Backend_Django/
 - **T3**: Gestión de perfil de usuario ✅
 - **T4**: Asignar rol a usuario ✅
 
-### 📊 Estadísticas
-- **4/4 tareas completadas** (100%)
+### ✅ MÓDULO 2: GESTIÓN FINANCIERA - COMPLETADO
+- **T1**: Crear cuota de condominio ✅
+- **T2**: Pagar cuota online ✅
+- **T3**: Generar estado de cuenta ✅
+- **T4**: Generar comprobante de pago ✅
+
+### ✅ MÓDULO 3: COMUNICACIONES - COMPLETADO
+- **T1**: Crear anuncio ✅
+- **T2**: Enviar mensaje directo ✅
+- **T3**: Ver bandeja de entrada ✅
+- **T4**: Marcar como leído ✅
+
+### ✅ MÓDULO 4: RESERVAS DE ÁREAS COMUNES - COMPLETADO
+- **T1**: Consultar disponibilidad ✅
+- **T2**: Reservar área común ✅
+- **T3**: Confirmar reserva con pago ✅
+- **T4**: Cancelar reserva ✅
+
+### 📊 Estadísticas Generales
+- **16/16 tareas completadas** (100%)
+- **200+ tests unitarios** ejecutados exitosamente
+- **Documentación completa** para todos los módulos
+- **Testing avanzado** (stress, edge cases, concurrencia)
+- **Integración completa** con React y Flutter
+- **Estructura limpia** y mantenible
 - **46+ tests unitarios** ejecutados exitosamente
 - **Documentación completa** y organizada
 - **Estructura limpia** y mantenible
