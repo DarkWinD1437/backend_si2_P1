@@ -1,9 +1,41 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 # Usa get_user_model() para obtener el modelo User personalizado
 User = get_user_model()
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """Serializer personalizado para obtener tokens JWT con información adicional del usuario"""
+    
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        
+        # Agregar información adicional del usuario al token
+        token['role'] = user.role
+        token['username'] = user.username
+        
+        return token
+
+    def validate(self, attrs):
+        """Validar credenciales y retornar datos adicionales"""
+        data = super().validate(attrs)
+        
+        # Agregar información del usuario a la respuesta
+        data['user'] = {
+            'id': self.user.id,
+            'username': self.user.username,
+            'email': self.user.email,
+            'first_name': self.user.first_name,
+            'last_name': self.user.last_name,
+            'role': self.user.role,
+            'phone': self.user.phone,
+            'address': self.user.address,
+        }
+        
+        return data
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer para mostrar datos del usuario (sin password)"""

@@ -10,7 +10,8 @@ from .views import (
     UserLogoutView,
     UserProfileView,
     UserPasswordChangeView,
-    UserProfilePictureView
+    UserProfilePictureView,
+    CustomTokenObtainPairView  # ← Vista personalizada
 )
 
 router = DefaultRouter()
@@ -29,7 +30,7 @@ urlpatterns = [
     
     # ViewSet URLs
     path('', include(router.urls)),
-    # JWT token URLs (duplicados para flexibilidad)
-    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # JWT token URLs - Usar vista personalizada
+    path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),  # ← Vista personalizada
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]

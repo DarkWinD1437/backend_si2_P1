@@ -31,6 +31,7 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     '192.168.0.7',  # ← IP local para Flutter
+    '192.168.100.33',  # ← IP actual de la máquina
     '0.0.0.0',      # ← Para desarrollo
 ]
 
@@ -44,8 +45,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5174",  # Vite alternativo
     "http://localhost:8080",  # Flutter web
     "http://192.168.0.7:8000", # Flutter web local
+    "http://192.168.100.33:8000", # IP actual de la máquina
     "http://10.0.2.2:8000",   # Android emulator
-    "http://192.168.1.1:8000", # Red local común
+    "http://192.168.0.1:8000", # Red local común
     "http://127.0.0.1:8000",  # localhost con puerto
 ]
 
@@ -55,12 +57,13 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5174",
     "http://localhost:8080",
     "http://localhost:8000",
+    "http://192.168.100.33:8000",  # IP actual de la máquina
 ]
 
 # Configuración de DRF
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',  # ← Cambiado para desarrollo
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
@@ -99,6 +102,7 @@ INSTALLED_APPS = [
     'backend.apps.condominio',  # ← Actualizada a ruta completa
     'backend.apps.finances',  # ← Si necesitas otras apps
     'backend.apps.communications',  # ← Nueva app de comunicaciones
+    'backend.apps.reservations',  # ← Nueva app de reservas
     'backend.apps.security',
     'backend.apps.audit',  # ← Módulo de auditoría y bitácora
 ]

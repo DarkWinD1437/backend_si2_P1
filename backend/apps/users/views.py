@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model
 from .serializers import (
@@ -10,8 +11,18 @@ from .serializers import (
     UserCreateSerializer, 
     UserUpdateSerializer,
     UserPasswordChangeSerializer,
-    UserProfilePictureSerializer
+    UserProfilePictureSerializer,
+    CustomTokenObtainPairSerializer
 )
+
+User = get_user_model()
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    Vista personalizada para obtener tokens JWT
+    Usa el serializador personalizado que incluye información del usuario
+    """
+    serializer_class = CustomTokenObtainPairSerializer
 
 User = get_user_model()
 
