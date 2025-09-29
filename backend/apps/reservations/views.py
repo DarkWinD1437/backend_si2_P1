@@ -15,7 +15,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.utils import timezone
-from datetime import date, time, datetime, timedelta
+from datetime import date, time, datetime, timedelta, timezone as dt_timezone
 from decimal import Decimal
 
 from .models import (
@@ -144,11 +144,11 @@ class AreaComunViewSet(viewsets.ModelViewSet):
         except HorarioDisponible.DoesNotExist:
             return Response({
                 'disponible': False,
-                'mensaje': f'El área no está disponible los {dia_semana}s',
+                'mensaje': f'El área no está disponible este día de la semana',
                 'horarios_disponibles': []
             })
 
-        # Generar slots de tiempo disponibles (cada 30 minutos)
+        # Generar slots de tiempo disponibles (cada tiempo_minimo_reserva horas)
         slots_disponibles = []
         hora_actual = horario.hora_apertura
 
@@ -166,8 +166,8 @@ class AreaComunViewSet(viewsets.ModelViewSet):
                     'costo_total': str(area.calcular_costo_total(area.tiempo_minimo_reserva))
                 })
 
-            # Avanzar 30 minutos
-            hora_actual = (datetime.combine(date.today(), hora_actual) + timedelta(minutes=30)).time()
+            # Avanzar el tiempo mínimo de reserva (no 30 minutos fijos)
+            hora_actual = (datetime.combine(date.today(), hora_actual) + timedelta(hours=area.tiempo_minimo_reserva)).time()
 
         return Response({
             'area_comun': AreaComunListSerializer(area).data,
@@ -196,42 +196,64 @@ class AreaComunViewSet(viewsets.ModelViewSet):
             "observaciones": "Fiesta de cumpleaños"
         }
         """
+        print(f"DEBUG: Starting reservation request")
+        print(f"DEBUG: Request data: {request.data}")
+        print(f"DEBUG: Request user: {request.user}")
+        print(f"DEBUG: User authenticated: {request.user.is_authenticated}")
+        if hasattr(request.user, 'role'):
+            print(f"DEBUG: User role: {request.user.role}")
+
         area = self.get_object()
+        print(f"DEBUG: Area found: {area.nombre}")
 
         # Verificar permisos del usuario
         if not area.puede_reservar_usuario(request.user):
+            print(f"DEBUG: Permission denied for user {request.user}")
             return Response(
                 {'error': 'No tiene permisos para reservar esta área'},
                 status=status.HTTP_403_FORBIDDEN
             )
 
+        print(f"DEBUG: Permissions OK, validating serializer")
         serializer = CrearReservaSerializer(data=request.data)
+        print(f"DEBUG: Serializer is valid: {serializer.is_valid()}")
         if not serializer.is_valid():
+            print(f"DEBUG: Serializer errors: {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
         # Validar fecha y hora
         fecha = serializer.validated_data['fecha']
         hora_inicio = serializer.validated_data['hora_inicio']
         hora_fin = serializer.validated_data['hora_fin']
 
+        print(f"DEBUG: Fecha: {fecha}, Hora inicio: {hora_inicio}, Hora fin: {hora_fin}")
+
         # Verificar anticipación mínima
         fecha_hora_reserva = datetime.combine(fecha, hora_inicio)
         ahora = timezone.now()
-        horas_anticipacion = (fecha_hora_reserva - ahora).total_seconds() / 3600
+        # Interpretar la fecha/hora de reserva en la zona horaria actual (no UTC)
+        # para que coincida con el cálculo del frontend
+        current_tz = timezone.get_current_timezone()
+        fecha_hora_reserva_aware = timezone.make_aware(fecha_hora_reserva, timezone=current_tz)
+        horas_anticipacion = (fecha_hora_reserva_aware - ahora).total_seconds() / 3600
 
-        if horas_anticipacion < area.anticipacion_minimo_horas:
+        print(f"DEBUG: Horas anticipacion: {horas_anticipacion}, Min required: {area.anticipo_minimo_horas}")
+
+        if horas_anticipacion < area.anticipo_minimo_horas:
             return Response(
-                {'error': f'Se requiere reserva con al menos {area.anticipacion_minimo_horas} horas de anticipación'},
+                {'error': f'Se requiere reserva con al menos {area.anticipo_minimo_horas} horas de anticipación'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         # Verificar disponibilidad
+        print(f"DEBUG: Checking availability")
         if not area.esta_disponible_en_fecha(fecha, hora_inicio, hora_fin):
+            print(f"DEBUG: Area not available")
             return Response(
                 {'error': 'El horario solicitado no está disponible'},
                 status=status.HTTP_409_CONFLICT
             )
 
+        print(f"DEBUG: Area available, checking capacity")
         # Verificar capacidad
         numero_personas = serializer.validated_data.get('numero_personas', 1)
         if numero_personas > area.capacidad_maxima:
@@ -240,12 +262,14 @@ class AreaComunViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Calcular duración y costo
+        print(f"DEBUG: Capacity OK, calculating duration and cost")
         inicio = datetime.combine(fecha, hora_inicio)
         fin = datetime.combine(fecha, hora_fin)
         if fin <= inicio:
             fin = datetime.combine(fecha + timedelta(days=1), hora_fin)
         duracion = (fin - inicio).total_seconds() / 3600
+
+        print(f"DEBUG: Duration: {duracion} hours")
 
         if duracion < area.tiempo_minimo_reserva or duracion > area.tiempo_maximo_reserva:
             return Response(
@@ -254,22 +278,35 @@ class AreaComunViewSet(viewsets.ModelViewSet):
             )
 
         costo_total = area.calcular_costo_total(duracion)
+        print(f"DEBUG: Cost: {costo_total}")
 
-        # Crear la reserva
-        reserva = Reserva.objects.create(
-            area_comun=area,
-            usuario=request.user,
-            fecha=fecha,
-            hora_inicio=hora_inicio,
-            hora_fin=hora_fin,
-            duracion_horas=Decimal(str(duracion)),
-            costo_total=costo_total,
-            numero_personas=numero_personas,
-            observaciones=serializer.validated_data.get('observaciones', ''),
-            estado=EstadoReserva.PENDIENTE if area.requiere_aprobacion else EstadoReserva.CONFIRMADA
-        )
+        print(f"DEBUG: Creating reservation object")
+        try:
+            reserva = Reserva.objects.create(
+                area_comun=area,
+                usuario=request.user,
+                fecha=fecha,
+                hora_inicio=hora_inicio,
+                hora_fin=hora_fin,
+                duracion_horas=Decimal(str(duracion)),
+                costo_total=costo_total,
+                numero_personas=numero_personas,
+                observaciones=serializer.validated_data.get('observaciones', ''),
+                estado=EstadoReserva.PENDIENTE if area.requiere_aprobacion else EstadoReserva.CONFIRMADA
+            )
+            print(f"DEBUG: Reservation created successfully: {reserva.id}")
+        except Exception as e:
+            print(f"DEBUG: Error creating reservation: {str(e)}")
+            print(f"DEBUG: Exception type: {type(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {'error': f'Error creando reserva: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         serializer_respuesta = ReservaSerializer(reserva)
+        print(f"DEBUG: Returning response")
         return Response(serializer_respuesta.data, status=status.HTTP_201_CREATED)
 
 
@@ -322,12 +359,15 @@ class ReservaViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def confirmar(self, request, pk=None):
         """
-        T3: Confirmar Reserva con Pago
+        T3: Confirmar Reserva / Pagar Reserva
 
         POST /api/reservations/reservas/{id}/confirmar/
         {
             "metodo_pago": "transferencia_bancaria"
         }
+
+        - Confirma reservas PENDIENTE (cambia a PAGADA)
+        - Paga reservas CONFIRMADA (cambia a PAGADA)
         """
         reserva = self.get_object()
 
@@ -338,9 +378,9 @@ class ReservaViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        if not reserva.puede_confirmar:
+        if not reserva.puede_pagar:
             return Response(
-                {'error': 'Esta reserva no puede ser confirmada'},
+                {'error': 'Esta reserva no puede ser pagada'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -359,7 +399,7 @@ class ReservaViewSet(viewsets.ModelViewSet):
             # - Generar comprobante
 
             return Response({
-                'mensaje': 'Reserva confirmada y pagada exitosamente',
+                'mensaje': 'Reserva procesada exitosamente',
                 'reserva': ReservaSerializer(reserva).data
             })
 

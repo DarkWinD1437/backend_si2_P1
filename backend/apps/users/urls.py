@@ -28,6 +28,9 @@ urlpatterns = [
     path('profile/change-password/', UserPasswordChangeView.as_view(), name='user-change-password'),
     path('profile/picture/', UserProfilePictureView.as_view(), name='user-profile-picture'),
     
+    # Endpoint para obtener datos del usuario actual (requerido por frontend)
+    path('me/', UserViewSet.as_view({'get': 'me'}), name='user-me'),
+    
     # ViewSet URLs
     path('', include(router.urls)),
     # JWT token URLs - Usar vista personalizada

@@ -262,7 +262,6 @@ class Reserva(models.Model):
         verbose_name = "Reserva"
         verbose_name_plural = "Reservas"
         ordering = ['-fecha', '-hora_inicio']
-        unique_together = ['area_comun', 'fecha', 'hora_inicio', 'hora_fin']
 
     def __str__(self):
         return f"Reserva {self.area_comun.nombre} - {self.usuario.username} - {self.fecha}"

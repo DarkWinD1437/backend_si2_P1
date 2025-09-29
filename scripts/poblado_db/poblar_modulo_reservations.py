@@ -104,7 +104,7 @@ def poblar_areas_comunes():
 def poblar_horarios_disponibles(areas):
     """Poblar horarios disponibles para las áreas"""
 
-    dias_semana = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo']
+    dias_semana = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 
     horarios_data = [
         # Lunes a Viernes
@@ -118,9 +118,9 @@ def poblar_horarios_disponibles(areas):
     for area in areas:
         for dia in dias_semana:
             # Determinar horario según el día
-            if dia in ['lunes', 'martes', 'miercoles', 'jueves', 'viernes']:
+            if dia in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']:
                 horario = horarios_data[0]  # L-V
-            elif dia == 'sabado':
+            elif dia == 'saturday':
                 horario = horarios_data[1]  # Sábado
             else:
                 horario = horarios_data[2]  # Domingo

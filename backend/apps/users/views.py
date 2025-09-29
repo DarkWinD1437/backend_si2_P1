@@ -10,12 +10,36 @@ from .serializers import (
     UserSerializer, 
     UserCreateSerializer, 
     UserUpdateSerializer,
+    UserAdminUpdateSerializer,
     UserPasswordChangeSerializer,
     UserProfilePictureSerializer,
     CustomTokenObtainPairSerializer
 )
 
 User = get_user_model()
+
+class IsAdminUser(permissions.BasePermission):
+    """
+    Permiso personalizado que solo permite acceso a administradores
+    """
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # Solo administradores tienen acceso
+        return hasattr(request.user, 'role') and request.user.role == 'admin'
+
+class IsAdminOrStaff(permissions.BasePermission):
+    """
+    Permiso personalizado que permite acceso a administradores y staff
+    """
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # Administradores y staff tienen acceso
+        return (hasattr(request.user, 'role') and 
+                request.user.role in ['admin', 'security', 'maintenance'])
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     """
@@ -223,13 +247,13 @@ class UserLogoutView(APIView):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get_serializer_class(self):
         if self.action == 'create':
             return UserCreateSerializer
         elif self.action in ['update', 'partial_update']:
-            return UserUpdateSerializer
+            return UserAdminUpdateSerializer
         return UserSerializer
 
     @action(detail=False, methods=['post'], permission_classes=[permissions.AllowAny])
@@ -312,9 +336,15 @@ class UserViewSet(viewsets.ModelViewSet):
                 'error': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
     
+    @action(detail=False, methods=['get'], permission_classes=[IsAdminOrStaff])
+    def residentes(self, request):
+        """Obtener lista de residentes para analytics"""
+        residentes = User.objects.filter(role='resident')
+        serializer = UserSerializer(residentes, many=True)
+        return Response(serializer.data)
+
     @action(detail=True, methods=['post'])
     def assign_role(self, request, pk=None):
-        """Asignar rol a un usuario (solo para administradores)"""
         # Verificar que el usuario actual es administrador
         if not (request.user.is_superuser or request.user.role == 'admin'):
             return Response({

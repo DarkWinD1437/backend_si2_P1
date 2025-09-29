@@ -3,10 +3,14 @@
 import os
 import sys
 
+# Configurar variables de entorno para eliminar advertencias de TensorFlow
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Solo mostrar errores, no warnings
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'  # Desactivar oneDNN optimizations warnings
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

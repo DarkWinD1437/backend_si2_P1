@@ -10,9 +10,11 @@ from rest_framework_simplejwt.views import (
 
 from rest_framework.authtoken.views import obtain_auth_token
 from backend.apps.users.views import CustomTokenObtainPairView  # ← Importar vista personalizada
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from backend.admin_custom import admin_site  # ← Importar admin personalizado
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin/', admin_site.urls),  # ← Usar admin personalizado
     # JWT URLs - Usar vista personalizada directamente
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),  # ← Vista directa
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
@@ -21,7 +23,7 @@ urlpatterns = [
     # API URLs
     path('api/', include('backend.apps.api.urls')),
     # Users URLs (sin duplicar token)
-    path('api/', include('backend.apps.users.urls')),  # ← Comentado para evitar duplicación
+    path('api/', include('backend.apps.users.urls')),
     # Finances URLs
     path('api/finances/', include('backend.apps.finances.urls')),
     # Communications URLs
@@ -30,6 +32,18 @@ urlpatterns = [
     path('api/reservations/', include('backend.apps.reservations.urls')),
     # Audit URLs
     path('api/audit/', include('backend.apps.audit.urls')),
+    # Security Module URLs
+    path('api/security/', include('backend.apps.modulo_ia.urls')),
+    # Notifications Module URLs
+    path('api/notifications/', include('backend.apps.modulo_notificaciones.urls')),
+    # Maintenance Module URLs
+    path('api/maintenance/', include('backend.apps.maintenance.urls')),
+    # Analytics Module URLs
+    path('api/analytics/', include('backend.apps.analytics.urls')),
+    # API Documentation
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
 
 # Servir archivos media en desarrollo
